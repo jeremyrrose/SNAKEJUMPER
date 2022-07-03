@@ -1,7 +1,8 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d')
 
-const RADIUS = 10
+const ROW = 20
+const RADIUS = ROW/2
 const RIGHT_MAX = canvas.width
 const BOTTOM = canvas.height
 
@@ -31,6 +32,7 @@ class Snake {
         this.segments = segments
         this.direction = direction
         this.yDirection = 1
+        this.yToggleCue = false
         this.color=color
         Snake.snakes.push(this)
         this.interval = this.moveSnake(Math.floor(Math.random()*8)+1)
@@ -44,7 +46,7 @@ class Snake {
         const curPos = {...this.headPosition}
         let direction = this.direction
         const nodes = []
-        new Array(this.segments).fill(null).forEach(x=>{
+        new Array(this.segments).fill(null).forEach((x,i)=>{
 
             // check player collision
             if (game.player && Math.abs(game.player.position.x + (PLAYER_WIDTH/2) - curPos.x) < RADIUS
@@ -66,17 +68,25 @@ class Snake {
 
             // check block collisions
             const blockingBlock = Block.blocks.find(block => {
-                return Math.abs(block.position.x - this.headPosition.x) < RADIUS * 2
-                    && Math.abs(block.position.y - this.headPosition.y) < RADIUS * 2
+                return Math.abs(block.position.x + ROW/2 - curPos.x) < RADIUS * 2
+                    && Math.abs(block.position.y - curPos.y) < RADIUS * 2
                 })
             if (blockingBlock) {
-                    // curPos.x = RADIUS + curPos.x
-                    // curPos.y += 2*RADIUS*this.yDirection
-                    curPos.x = blockingBlock.position.x+PLAYER_WIDTH
-                    curPos.y += 2*RADIUS*this.yDirection
+                // nodes.push({...curPos})
+                // curPos.x = RADIUS + curPos.x
+                // curPos.y += 2*RADIUS*this.yDirection
+                // direction *= -1
+                // if (direction > 0) {
+                    curPos.x = blockingBlock.position.x+((RADIUS+PLAYER_WIDTH)*direction)
+                    curPos.y -= 2*RADIUS*this.yDirection
                     direction *= -1
-                    nodes.push({...curPos})
-            }
+                    // nodes.push({...curPos})
+                // } else {
+                //     curPos.x = blockingBlock.position.x-((RADIUS+PLAYER_WIDTH)*direction)
+                //     curPos.y -= 2*RADIUS*this.yDirection
+                //     direction = 1
+                // }
+            } else
 
             if (direction > 0) {
                 if (curPos.x - RADIUS >= 0) {
@@ -114,27 +124,29 @@ class Snake {
 
     moveSnake(velocity=3){
         const inter = setInterval(()=>{
-            if (this.headPosition.y > BOTTOM || this.headPosition.y < 0) {
-                this.yDirection *= -1
+            if (!this.yToggleCue && (this.headPosition.y > BOTTOM - 2*RADIUS || this.headPosition.y < 0 + RADIUS)) {
+                this.yToggleCue = true
             }
 
-            // // check block collisions
-            // const blockingBlock = Block.blocks.find(block => {
-            //     return Math.abs(block.position.x - this.headPosition.x) < RADIUS * 2
-            //         && Math.abs(block.position.y - this.headPosition.y) < RADIUS * 2
-            //     })
-            // if (blockingBlock) {
-            //         // curPos.x = RADIUS + curPos.x
-            //         // curPos.y += 2*RADIUS*this.yDirection
-            //         this.headPosition.x = blockingBlock.position.x+PLAYER_WIDTH
-            //         this.headPosition.y += 2*RADIUS*this.yDirection
-            //         this.direction *= -1
-            // }
-
-            if (this.direction > 0) {
+            // check block collisions
+            const blockingBlock = Block.blocks.find(block => {
+                return Math.abs(block.position.x - this.headPosition.x) < RADIUS * 2
+                    && Math.abs(block.position.y - this.headPosition.y) < RADIUS * 2
+                })
+            if (blockingBlock) {
+                    // curPos.x = RADIUS + curPos.x
+                    // curPos.y += 2*RADIUS*this.yDirection
+                    this.headPosition.x = blockingBlock.position.x+ROW
+                    this.headPosition.y += 2*RADIUS*this.yDirection
+                    this.direction *= -1
+            } else if (this.direction > 0) {
                 if (this.headPosition.x + RADIUS + velocity <= RIGHT_MAX) {
                     this.headPosition.x += velocity
                 } else {
+                    if (this.yToggleCue) {
+                        this.yDirection *= -1
+                        this.yToggleCue = false
+                    }
                     this.headPosition.x = RIGHT_MAX - RADIUS
                     this.headPosition.y += 2*RADIUS*this.yDirection
                     this.direction = -1
@@ -143,6 +155,10 @@ class Snake {
                 if (this.headPosition.x - RADIUS - velocity > 0) {
                     this.headPosition.x -= velocity
                 } else {
+                    if (this.yToggleCue) {
+                        this.yDirection *= -1
+                        this.yToggleCue = false
+                    }
                     this.headPosition.x = RADIUS
                     this.headPosition.y += 2*RADIUS*this.yDirection
                     this.direction = 1
@@ -164,6 +180,7 @@ class Player {
             x: 0,
             y: 0
         }
+        this.block = false
     }
 
     draw(){
@@ -191,6 +208,17 @@ class Player {
             if (this.position.y >= BOTTOM-20) {
                 this.position.y = BOTTOM-20
                 this.velocity.y = 0
+            } else {
+                const blockingBlock = Block.blocks.find(block => {
+                    return Math.abs(block.position.x - this.position.x) < ROW
+                    && Math.abs(block.position.y - this.position.y) < ROW
+                })
+                if (blockingBlock) {
+                    this.velocity.y = 0
+                    this.block = blockingBlock.position.y > this.position.y
+                } else {
+                    this.block = false
+                }
             }
         },1)
 
@@ -199,10 +227,11 @@ class Player {
                 this.velocity.x > 0 ?
                 this.velocity.x -= 1 : this.velocity.x += 1
             }
-        },80)
+        },60)
 
         const gravity = setInterval(() => {
-            this.position.y <= BOTTOM - 20 ?
+            console.log(this.block)
+            this.position.y <= BOTTOM - 20 && !this.block ?
                 this.velocity.y +=1 :
                 this.velocity.y = 0
         },80)
@@ -250,17 +279,25 @@ class Block {
 
     draw(){
         ctx.fillStyle = this.color
-        ctx.fillRect(this.position.x, this.position.y, PLAYER_WIDTH, PLAYER_WIDTH)
+        ctx.fillRect(this.position.x, this.position.y, ROW, ROW)
     }
 }
 
-new Snake({x:0, y:0}, Math.floor(Math.random()*12) + 8, 1), 
-new Snake({x:RIGHT_MAX, y:40}, Math.floor(Math.random()*12) + 8, -1, "lightblue"),
-new Snake({x:0, y:40}, Math.floor(Math.random()*12) + 8, -1, "orange"),
-new Snake({x:200, y:0}, Math.floor(Math.random()*12) + 8, -1, "grey")
+new Snake({x:0, y:RADIUS}, Math.floor(Math.random()*12) + 8, 1), 
+new Snake({x:RIGHT_MAX, y:3*RADIUS}, Math.floor(Math.random()*12) + 8, -1, "lightblue"),
+new Snake({x:0, y:3*RADIUS}, Math.floor(Math.random()*12) + 8, -1, "orange"),
+// new Snake({x:200, y:RADIUS}, Math.floor(Math.random()*12) + 8, -1, "grey")
 
-new Block({x:100,y:240})
-new Block({x:140,y:80})
+new Block({x:10*ROW,y:6*ROW})
+new Block({x:15*ROW,y:8*ROW})
+new Block({x:20*ROW,y:10*ROW})
+new Block({x:8*ROW,y:13*ROW})
+new Block({x:24*ROW,y:18*ROW})
+new Block({x:24*ROW,y:28*ROW})
+new Block({x:23*ROW,y:28*ROW})
+new Block({x:22*ROW,y:28*ROW})
+new Block({x:21*ROW,y:28*ROW})
+new Block({x:20*ROW,y:28*ROW})
 
 game.player = new Player()
 
