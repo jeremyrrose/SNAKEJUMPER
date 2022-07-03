@@ -251,6 +251,15 @@ class Dart {
         const darter = setInterval(()=> {
             if (this.position.y < 0) {
                 this.remove()
+            } else {
+                const hitBlock = Block.blocks.find(block => {
+                    return Math.abs(block.position.x + ROW/2 - this.position.x) < ROW / 2
+                    && Math.abs(block.position.y + ROW/2 - this.position.y) < ROW
+                })
+                if (hitBlock) {
+                    hitBlock.damage(2)
+                    this.remove()
+                }
             }
             this.position.y -= 4
         },5)
@@ -270,15 +279,26 @@ class Dart {
 
 class Block {
     static blocks = []
-    constructor(position, color="black") {
+
+    constructor(position) {
         this.position = {...position}
-        this.color = color
         this.health = 10
         Block.blocks.push(this)
     }
 
+    damage(amount=1) {
+        this.health -= amount
+        if (this.health <= 0) {
+            this.remove()
+        }
+    }
+
+    remove(){
+        Block.blocks.splice(Block.blocks.indexOf(this),1)
+    }
+
     draw(){
-        ctx.fillStyle = this.color
+        ctx.fillStyle = `rgba(0,0,0,${this.health/10})`
         ctx.fillRect(this.position.x, this.position.y, ROW, ROW)
     }
 }
@@ -293,6 +313,9 @@ new Block({x:15*ROW,y:8*ROW})
 new Block({x:20*ROW,y:10*ROW})
 new Block({x:8*ROW,y:13*ROW})
 new Block({x:24*ROW,y:18*ROW})
+new Block({x:27*ROW,y:28*ROW})
+new Block({x:26*ROW,y:28*ROW})
+new Block({x:25*ROW,y:28*ROW})
 new Block({x:24*ROW,y:28*ROW})
 new Block({x:23*ROW,y:28*ROW})
 new Block({x:22*ROW,y:28*ROW})
