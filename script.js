@@ -51,7 +51,7 @@ class Snake {
             // check player collision
             if (game.player && Math.abs(game.player.position.x + (PLAYER_WIDTH/2) - curPos.x) < RADIUS
             && Math.abs(game.player.position.y + (PLAYER_WIDTH/2) - curPos.y) < RADIUS) {
-                console.log("you lose")
+                game.player.damage(5)
             }
 
             // check dart collisions
@@ -170,8 +170,8 @@ class Snake {
 }
 
 class Player {
-    constructor(color="red") {
-        this.color = color
+    constructor() {
+        this.health = 100
         this.position = {
             x: RIGHT_MAX/2 - 20,
             y: BOTTOM - 20
@@ -184,7 +184,7 @@ class Player {
     }
 
     draw(){
-        ctx.fillStyle = this.color
+        ctx.fillStyle = `rgba(200,29,17,${this.health/100})`
         ctx.fillRect(this.position.x, this.position.y, PLAYER_WIDTH, PLAYER_WIDTH)
     }
 
@@ -194,6 +194,13 @@ class Player {
         }
         if (yVector) {
             this.velocity.y += yVector
+        }
+    }
+
+    damage(amount=1) {
+        this.health -= amount
+        if (this.health <= 0) {
+            cancelAnimationFrame(currentAnim)
         }
     }
 
@@ -230,7 +237,6 @@ class Player {
         },60)
 
         const gravity = setInterval(() => {
-            console.log(this.block)
             this.position.y <= BOTTOM - 20 && !this.block ?
                 this.velocity.y +=1 :
                 this.velocity.y = 0
@@ -324,8 +330,9 @@ new Block({x:20*ROW,y:28*ROW})
 
 game.player = new Player()
 
+let currentAnim
 const bounce = () => {
-    requestAnimationFrame(bounce)
+    currentAnim = requestAnimationFrame(bounce)
     ctx.clearRect(0,0,canvas.width,canvas.height)
     Snake.snakes.forEach(snek => snek.drawSnake(ctx))
     Block.blocks.forEach(block => block.draw())
