@@ -343,7 +343,7 @@ const bounce = () => {
     game.player.draw()
     score.innerHTML = game.score
     health.innerHTML = `${game.player.health} / 100`
-    if (game.player.health <= 90) {
+    if (game.player.health <= 0) {
         ctx.font = 'bold 48px sans-serif'
         ctx.fillStyle = `rgba(0,100,0,1)`
         cancelAnimationFrame(currentAnim)
