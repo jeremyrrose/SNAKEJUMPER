@@ -1,3 +1,15 @@
 canvas {
     border: 2px solid grey;
+    width: 560px;
+}
+
+.info {
+    width: 560px;
+    display: flex;
+    justify-content: space-between;
+    font-family: sans-serif;
+}
+
+.info > div {
+    display: flex;
 }

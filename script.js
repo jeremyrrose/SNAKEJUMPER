@@ -1,6 +1,9 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d')
 
+const score = document.getElementById('score')
+const health = document.getElementById('health')
+
 const ROW = 20
 const RADIUS = ROW/2
 const RIGHT_MAX = canvas.width
@@ -9,7 +12,8 @@ const BOTTOM = canvas.height
 const PLAYER_WIDTH = 20
 
 const game = {
-    player: null
+    player: null,
+    score: 0
 }
 
 class Segment {
@@ -62,6 +66,7 @@ class Snake {
                         return true
                     }
             })) {
+                game.score += 50
                 this.segments -= 1
             }
 
@@ -199,9 +204,6 @@ class Player {
 
     damage(amount=1) {
         this.health -= amount
-        if (this.health <= 0) {
-            cancelAnimationFrame(currentAnim)
-        }
     }
 
     exist(){
@@ -293,6 +295,7 @@ class Block {
     }
 
     damage(amount=1) {
+        game.score += 5
         this.health -= amount
         if (this.health <= 0) {
             this.remove()
@@ -338,6 +341,21 @@ const bounce = () => {
     Block.blocks.forEach(block => block.draw())
     Dart.darts.forEach(dart => dart.draw())
     game.player.draw()
+    score.innerHTML = game.score
+    health.innerHTML = `${game.player.health} / 100`
+    if (game.player.health <= 90) {
+        ctx.font = 'bold 48px sans-serif'
+        ctx.fillStyle = `rgba(0,100,0,1)`
+        cancelAnimationFrame(currentAnim)
+        ctx.fillText("YOU DIED", 150, 300)
+        ctx.fillText("FROM SNAKES", 90, 360)
+    }
+    if (!Snake.snakes.length) {
+        ctx.font = 'bold 48px sans-serif'
+        ctx.fillStyle = `rgba(0,100,0,1)`
+        cancelAnimationFrame(currentAnim)
+        ctx.fillText("YOU WON!", 150, 300)
+    }
 }
 
 if (ctx) {
