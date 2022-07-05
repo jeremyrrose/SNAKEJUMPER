@@ -13,3 +13,8 @@ canvas {
 .info > div {
     display: flex;
 }
+
+.info p {
+    padding: 0;
+    margin: 0;
+}
