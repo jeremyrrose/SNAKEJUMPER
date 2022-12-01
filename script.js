@@ -1,20 +1,28 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d')
 
+const info = document.getElementById('info')
 const score = document.getElementById('score')
 const health = document.getElementById('health')
+const levelIndicator = document.getElementById('level')
 
+// constants
 const ROW = 20
 const RADIUS = ROW/2
 const RIGHT_MAX = canvas.width
+const MAX_BLOCK_WIDTH = Math.floor(RIGHT_MAX / ROW) + 1
 const BOTTOM = canvas.height
-
 const PLAYER_WIDTH = 20
+const DEFAULT_SNAKE_VELOCITY = 3
+const DART_DELAY = 80
 
+// game state
 const game = {
     player: null,
-    score: 0
+    score: 0,
+    level: 1
 }
+
 
 class Segment {
     constructor(position) {
@@ -29,9 +37,11 @@ class Segment {
 }
 
 class Snake {
+
+    // Snake.snakes collects all Snakes in memory
     static snakes = []
 
-    constructor(headPosition,segments,direction,color="rgba(0,200,0,0.5)"){
+    constructor(headPosition,segments,direction,color="rgba(0,200,0,0.5)",velocity=DEFAULT_SNAKE_VELOCITY){
         this.headPosition = headPosition
         this.segments = segments
         this.direction = direction
@@ -39,13 +49,12 @@ class Snake {
         this.yToggleCue = false
         this.color=color
         Snake.snakes.push(this)
-        this.interval = this.moveSnake(Math.floor(Math.random()*8)+1)
+        this.interval = this.moveSnake(velocity)
     }
     
     getSnake() {
         if (this.segments < 1) {
-            Snake.snakes.splice(Snake.snakes.indexOf(this),1)
-            clearInterval(this.interval)
+            this.remove()
         }
         const curPos = {...this.headPosition}
         let direction = this.direction
@@ -91,9 +100,8 @@ class Snake {
                 //     curPos.y -= 2*RADIUS*this.yDirection
                 //     direction = 1
                 // }
-            } else
+            } else if (direction > 0) {
 
-            if (direction > 0) {
                 if (curPos.x - RADIUS >= 0) {
                     nodes.push({...curPos})
                     curPos.x -= 2*RADIUS
@@ -127,13 +135,13 @@ class Snake {
         })
     }
 
-    moveSnake(velocity=3){
+    moveSnake(velocity=DEFAULT_SNAKE_VELOCITY){
         const inter = setInterval(()=>{
             if (!this.yToggleCue && (this.headPosition.y > BOTTOM - 2*RADIUS || this.headPosition.y < 0 + RADIUS)) {
                 this.yToggleCue = true
             }
 
-            // check block collisions
+            // check for block collisions
             const blockingBlock = Block.blocks.find(block => {
                 return Math.abs(block.position.x - this.headPosition.x) < RADIUS * 2
                     && Math.abs(block.position.y - this.headPosition.y) < RADIUS * 2
@@ -172,6 +180,11 @@ class Snake {
         }, 10)
         return inter
     }
+
+    remove() {
+        Snake.snakes.splice(Snake.snakes.indexOf(this),1)
+        clearInterval(this.interval)
+    }
 }
 
 class Player {
@@ -186,6 +199,7 @@ class Player {
             y: 0
         }
         this.block = false
+        this.jumped = 0
     }
 
     draw(){
@@ -193,12 +207,15 @@ class Player {
         ctx.fillRect(this.position.x, this.position.y, PLAYER_WIDTH, PLAYER_WIDTH)
     }
 
-    move(xVector,yVector){
+    move(xVector,yVector, jump=false){
         if (xVector) {
             this.velocity.x += xVector
         }
-        if (yVector) {
-            this.velocity.y += yVector
+        if (jump) {
+            this.jumped = new Date().getTime()
+            if (yVector) {
+                this.velocity.y += yVector
+            }
         }
     }
 
@@ -217,6 +234,8 @@ class Player {
             if (this.position.y >= BOTTOM-20) {
                 this.position.y = BOTTOM-20
                 this.velocity.y = 0
+            } else if (this.position.y <= 2) {
+                this.velocity.y = 2
             } else {
                 const blockingBlock = Block.blocks.find(block => {
                     return Math.abs(block.position.x - this.position.x) < ROW
@@ -239,19 +258,28 @@ class Player {
         },60)
 
         const gravity = setInterval(() => {
-            this.position.y <= BOTTOM - 20 && !this.block ?
-                this.velocity.y +=1 :
-                this.velocity.y = 0
+            if (new Date().getTime() - this.jumped > 100) {
+                this.position.y <= BOTTOM - 20 && !this.block ?
+                    this.velocity.y +=.5 :
+                    this.velocity.y = 0
+            }
         },80)
     }
 }
 
 class Dart {
+
+    // Dart.darts collects all Darts in memory
     static darts = []
+
+    // timestamp for dart delay
+    static lastFired = 0
+
     constructor(position, color="orange") {
         this.position = {...position}
         this.color = color
         Dart.darts.push(this)
+        Dart.lastFired = new Date().getTime()
         this.interval = this.fire()
     }
 
@@ -286,6 +314,8 @@ class Dart {
 }
 
 class Block {
+
+    // Block.blocks collects all Blocks in memory
     static blocks = []
 
     constructor(position) {
@@ -312,27 +342,43 @@ class Block {
     }
 }
 
-new Snake({x:0, y:RADIUS}, Math.floor(Math.random()*12) + 8, 1), 
-new Snake({x:RIGHT_MAX, y:3*RADIUS}, Math.floor(Math.random()*12) + 8, -1, "lightblue"),
-new Snake({x:0, y:3*RADIUS}, Math.floor(Math.random()*12) + 8, -1, "orange"),
-// new Snake({x:200, y:RADIUS}, Math.floor(Math.random()*12) + 8, -1, "grey")
+const snakeColors = ["lightblue", "orange", "green", "darkyellow", "coral", "purple", "magenta"]
 
-new Block({x:10*ROW,y:6*ROW})
-new Block({x:15*ROW,y:8*ROW})
-new Block({x:20*ROW,y:10*ROW})
-new Block({x:8*ROW,y:13*ROW})
-new Block({x:24*ROW,y:18*ROW})
-new Block({x:27*ROW,y:28*ROW})
-new Block({x:26*ROW,y:28*ROW})
-new Block({x:25*ROW,y:28*ROW})
-new Block({x:24*ROW,y:28*ROW})
-new Block({x:23*ROW,y:28*ROW})
-new Block({x:22*ROW,y:28*ROW})
-new Block({x:21*ROW,y:28*ROW})
-new Block({x:20*ROW,y:28*ROW})
+const initialize = (levelInfo = {numSnakes: null, numBlocks: 6, velocityMod: null}) => {
 
-game.player = new Player()
+    const numSnakes = levelInfo.numSnakes || game.level + 2
+    const velocityMod = levelInfo.velocityMod || game.level
 
+    for (let i=0; i < numSnakes; i++) {
+
+        // randomly generate Snake properties (with modifiers)
+        const yNum = Math.floor(Math.random() * 5) * 3 * RADIUS || RADIUS
+        const xNum = Math.floor(Math.random() * 10) > 5 ? 0 : RIGHT_MAX
+        const direction = Math.floor(Math.random() * 10) > 5 ? -1 : 1
+        const color = snakeColors[Math.floor(Math.random()*snakeColors.length)]
+        const velocity = Math.floor(Math.random()*4*velocityMod) + velocityMod
+        
+        new Snake({x: xNum, y: yNum}, Math.floor(Math.random()*12) + 8, direction, color, velocity)
+    }
+    
+    for  (let i=0; i < levelInfo.numBlocks; i++) {
+        let xNum = Math.floor(Math.random() * MAX_BLOCK_WIDTH)
+        const yNum = Math.floor(Math.random() * 24) + 6
+
+        // make random block rows
+        let makeRow = true
+        while (makeRow && xNum < MAX_BLOCK_WIDTH) {
+            new Block({x:xNum*ROW,y:yNum*ROW})
+            makeRow = Math.random() > .15
+            xNum++
+        }
+    }
+    
+    if (!game.player || game.player.health == 0){
+        game.player = new Player()
+    }
+}
+    
 let currentAnim
 const bounce = () => {
     currentAnim = requestAnimationFrame(bounce)
@@ -349,63 +395,76 @@ const bounce = () => {
         cancelAnimationFrame(currentAnim)
         ctx.fillText("YOU DIED", 150, 300)
         ctx.fillText("FROM SNAKES", 90, 360)
+        ctx.font = 'bold 36px sans-serif'
+        ctx.fillText("click to restart", 150, 440)
+        canvas.addEventListener("click", main)
     }
     if (!Snake.snakes.length) {
         ctx.font = 'bold 48px sans-serif'
         ctx.fillStyle = `rgba(0,100,0,1)`
         cancelAnimationFrame(currentAnim)
-        ctx.fillText("YOU WON!", 150, 300)
+        ctx.fillText("YOU BEAT", 150, 300)
+        ctx.fillText(`LEVEL ${game.level}!`, 165, 360)
+        ctx.font = 'bold 36px sans-serif'
+        ctx.fillText("click to continue", 150, 440)
+        canvas.addEventListener("click", main)
+    }
+}
+
+const main = () => {
+    canvas.removeEventListener("click", main)
+    if (game.player && game.player.health > 0) {
+        game.level++
+    } else {
+        game.level = 1
+    }
+    level.innerText = game.level
+
+    // clear any previous game
+    for (list of [Snake.snakes, Block.blocks, Dart.darts]) {
+        while (list.length) {
+            list[0].remove()
+        }
+    }
+
+    if (ctx) {
+        initialize()
+        bounce()
+        game.player.exist()
+    } else {
+    // canvas-unsupported code here
+    info.innerHTML = `
+        <div class="not-supported">
+            This game requires a browser that supports the Canvas API. Sorry!
+        </div>
+    `
     }
 }
 
 if (ctx) {
-    bounce()
-    game.player.exist()
-    addEventListener('keydown',(e)=>{
+    ctx.fillStyle = `rgba(0,100,0,1)`
+    ctx.font = 'bold 36px sans-serif'
+    ctx.fillText("click to start", 160, 440)
+    addEventListener('keypress',(e)=>{
         switch (e.key) {
             case "w":
-                game.player.move(0,-4)
+                game.player.move(0,-2, true)
                 break
             case "s":
                 game.player.move(0,4)
                 break
             case "a":
-                game.player.move(-4,0)
+                game.player.move(-2,0)
                 break
             case "d":
-                game.player.move(4,0)
+                game.player.move(2,0)
                 break
             case " ":
-                new Dart({x: game.player.position.x + PLAYER_WIDTH/8*3, y: game.player.position.y})
+                if (Dart.lastFired + DART_DELAY < new Date().getTime()){
+                    new Dart({x: game.player.position.x + PLAYER_WIDTH/8*3, y: game.player.position.y})
+                }
         }
     })
-} else {
-  // canvas-unsupported code here
+    canvas.addEventListener("click", main)
 }
-
-// const drawShapes = (ctx) => {
-    
-//     ctx.fillStyle = 'rgb(200, 0, 0)';
-//     ctx.fillRect(10, 10, 50, 50);
-
-//     ctx.strokeStyle = 'rgba(0, 0, 200, 0.5)';
-//     ctx.strokeRect(30, 30, 50, 50);
-
-//     ctx.beginPath()
-//     ctx.moveTo(15,15)
-//     ctx.lineTo(96,19)
-//     ctx.quadraticCurveTo(104,52,74,48)
-//     ctx.closePath()
-//     ctx.fillStyle = 'rgba(0,200,0,0.5)'
-//     ctx.fill()
-// }
-
-// const drawLink = async (ctx) => {
-//     const link = new Image(40,40)
-//     link.src = 'link.png'
-//     link.onload = async () => {
-//         const bitmap = await createImageBitmap(link, 0, 0, 100, 100)
-//         ctx.drawImage(bitmap, 50, 50)
-//     }
-// }
 

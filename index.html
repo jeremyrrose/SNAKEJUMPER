@@ -5,19 +5,25 @@
         <link rel="stylesheet" href="style.css">
     </head>
     <body>
-        <canvas id="canvas" width="560" height="660"></canvas>
-        <div class="info">
-            <div>
-                <p>SCORE:</p>
-                <p id="score"></p>
+        <container>
+            <canvas id="canvas" width="560" height="660"></canvas>
+            <div id="info">
+                <div>
+                    <p>SCORE: </p>
+                    <p id="score">&nbsp;</p>
+                </div>
+                <div>
+                    <p>HEALTH: </p>
+                    <p id="health">&nbsp;</p>
+                </div>
+                <div>
+                    <p>LEVEL: </p>
+                    <p id="level">&nbsp;</p>
+                </div>
             </div>
-            <div>
-                <p>HEALTH:</p>
-                <p id="health"></p>
+            <div id="controls">
+                <p>CONTROLS</p><p>W:jump</p><p>A:left</p><p>D:right</p><p>SPACE:fire!</p>
             </div>
-        </div>
-        <div class="controls">
-            <p>CONTROLS: W:jump A:left D:right SPACE:fire!</p>
-        </div>
+        </container>
     </body>
 </html>

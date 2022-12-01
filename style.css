@@ -1,20 +1,50 @@
+container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 canvas {
     border: 2px solid grey;
     width: 560px;
 }
 
-.info {
+.not-supported {
+    text-align: center;
+    padding: 4em;
+    font-size: 26px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#info {
     width: 560px;
     display: flex;
     justify-content: space-between;
     font-family: sans-serif;
+    color: green;
+    font-weight: bold;
+    font-size: 24;
 }
 
-.info > div {
+#info > div {
     display: flex;
 }
 
-.info p {
+#info p {
     padding: 0;
     margin: 0;
+}
+
+#controls {
+    width: 560px;
+    margin-top: 1em;
+    font-family: sans-serif;
+    color: green;
+    font-weight: lighter;
+    font-size: 18;
+}
+
+#controls p {
+    text-align: left;
+    margin: 0 auto;
 }
