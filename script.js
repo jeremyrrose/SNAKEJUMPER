@@ -23,7 +23,6 @@ const game = {
     level: 1
 }
 
-
 class Segment {
     constructor(position) {
         this.position = position
@@ -417,6 +416,7 @@ const main = () => {
         game.level++
     } else {
         game.level = 1
+        game.score = 0
     }
     level.innerText = game.level
 
