@@ -343,7 +343,7 @@ class Block {
 
 const snakeColors = ["lightblue", "orange", "green", "darkyellow", "coral", "purple", "magenta"]
 
-const initialize = (levelInfo = {numSnakes: null, numBlocks: 6, velocityMod: null}) => {
+const initialize = (levelInfo = {numSnakes: null, numBlocks: 12, velocityMod: null}) => {
 
     const numSnakes = levelInfo.numSnakes || game.level + 2
     const velocityMod = levelInfo.velocityMod || game.level
